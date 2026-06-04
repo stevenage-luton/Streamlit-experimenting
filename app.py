@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+import html as html_lib
 
 import plotly.express as px
 from datetime import datetime
@@ -114,3 +115,42 @@ if live_data.get("dataAvailable"):
     st.progress(min(pct / 100, 1.0))
 else:
     st.info("Live crowding data is not currently available for this station.")
+
+st.subheader("London Air Quality")
+
+air_quality_data = requests.get("https://api.tfl.gov.uk/AirQuality/").json()
+
+forecasts = {}
+
+for f in air_quality_data["currentForecast"]:
+    forecasts[f["forecastType"]] = f
+
+BAND_EMOJI = {"Low": "🟢", "Moderate": "🟡", "High": "🟠", "Very High": "🔴"}
+POLLUTANTS = [
+    ("nO2Band", "NO₂"),
+    ("o3Band", "O₃"),
+    ("pM10Band", "PM10"),
+    ("pM25Band", "PM2.5"),
+    ("sO2Band", "SO₂"),
+]
+
+today_tab, tomorrow_tab = st.tabs(["Today", "Tomorrow"])
+
+for tab, forecast_type in [(today_tab, "Current"), (tomorrow_tab, "Future")]:
+    with tab:
+        forecast = forecasts.get(forecast_type)
+        if not forecast:
+            st.info("No forecast available.")
+            continue
+
+        overall_band = forecast["forecastBand"]
+        st.metric("Overall", f"{BAND_EMOJI.get(overall_band, '')} {overall_band}")
+
+        pollutant_cols = st.columns(len(POLLUTANTS))
+        for col, (key, name) in zip(pollutant_cols, POLLUTANTS):
+            band = forecast[key]
+            col.metric(name, f"{BAND_EMOJI.get(band, '')} {band}")
+
+        forecast_text = html_lib.unescape(forecast["forecastText"])
+        forecast_text = forecast_text.replace("<br/>", "\n").replace("<br />", "\n").strip()
+        st.caption(forecast_text)
