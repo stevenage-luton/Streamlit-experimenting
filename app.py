@@ -7,10 +7,6 @@ import plotly.express as px
 from datetime import datetime
 
 
-APP_ID = "TfLInformation "
-APP_KEY = "969a0c054c304a08a54ed17da6b5b4ca"
-
-
 
 STATIONS = {
     "Oxford Circus": "940GZZLUOXC",
@@ -83,8 +79,8 @@ st.subheader(f"Live Crowding: {station_name}")
 if st.button("Refresh live data"):
     st.rerun()
 
-live_resp = requests.get(live_crowding_url, params={"app_id": APP_ID.strip(), "app_key": APP_KEY})
-live_data = live_resp.json()
+
+live_crowding = requests.get(live_crowding_url).json()
 
 now = datetime.now()
 current_day = now.strftime("%a").upper()
@@ -93,8 +89,8 @@ expected_row = df[(df["day"] == current_day) & (df["time"] == current_time_str)]
 expected_pct = expected_row["crowding"].iloc[0] if not expected_row.empty else None
 
 
-if live_data.get("dataAvailable"):
-    pct = live_data["percentageOfBaseline"] * 100
+if live_crowding.get("dataAvailable"):
+    pct = live_crowding["percentageOfBaseline"] * 100
     if pct < 40:
         label = "Quiet"
     elif pct < 70:
