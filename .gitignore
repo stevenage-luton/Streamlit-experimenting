@@ -7,3 +7,4 @@ venv/
 .streamlit/secrets.toml
 .claude
 lazygit.exe
+/adventOfCode.py
